@@ -1,0 +1,9 @@
+[package]
+name = "boring-derive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+quote = "1.0.36"
+syn = "2.0.67"
+boring_derive_macro = {path = "../boring-derive/boring_derive_macro/"}
