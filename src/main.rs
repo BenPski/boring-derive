@@ -1,11 +1,11 @@
 use std::usize;
 
-use boring_derive_macro::From;
+use boring_derive_macro::{Builder, From};
 
-// #[derive(Debug, From)]
-// struct Example {
-//     item: String,
-// }
+#[derive(Debug, From, Builder, Default)]
+struct Example {
+    item: String,
+}
 //
 // #[derive(Debug, From)]
 // struct Thing {}
@@ -68,4 +68,7 @@ fn main() {
     let x = String::from("dong");
     let e: Balls = x.into();
     println!("{:?}", e);
+
+    let x = Example::default().item("balls");
+    println!("{:?}", x);
 }
