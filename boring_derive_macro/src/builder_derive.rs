@@ -8,15 +8,16 @@ pub(crate) fn impl_builder(ast: &syn::DeriveInput) -> TokenStream {
 
     let expanded = match ast.data {
         Data::Struct(ref data) => {
-            let functions = data.fields.iter().map(|f| {
-                let field_name = &f.ident;
-                let field_ty = &f.ty;
-                quote_spanned! {f.span() =>
-                    pub fn #field_name (mut self, value: impl Into< #field_ty >) -> Self {
-                        self.#field_name = value.into();
-                        self
+            let functions = data.fields.iter().filter_map(|f| {
+                f.ident.as_ref().map(|field_name| {
+                    let field_ty = &f.ty;
+                    quote_spanned! {f.span() =>
+                        pub fn #field_name (mut self, value: impl Into< #field_ty >) -> Self {
+                            self.#field_name = value.into();
+                            self
+                        }
                     }
-                }
+                })
             });
             quote! {
                 impl #impl_generics #name #type_generics #where_clause {

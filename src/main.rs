@@ -6,10 +6,10 @@ use boring_derive_macro::{Builder, From};
 struct Example {
     item: String,
 }
-//
-// #[derive(Debug, From)]
-// struct Thing {}
-//
+
+#[derive(Debug, From, Builder)]
+struct Thing {}
+
 // #[derive(Debug, From)]
 // struct Example2 {
 //     item: String,
@@ -21,14 +21,14 @@ struct Example {
 //     item: T,
 // }
 //
-// #[derive(Debug, From)]
-// struct A;
-//
-// #[derive(Debug, From)]
-// struct B(usize);
-//
-// #[derive(Debug, From)]
-// struct C(String, usize);
+#[derive(Debug, From)]
+struct A;
+
+#[derive(Debug, From, Builder)]
+struct B(usize);
+
+#[derive(Debug, From)]
+struct C(String, usize);
 
 #[derive(Debug, From)]
 enum Balls {
