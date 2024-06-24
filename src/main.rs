@@ -1,3 +1,5 @@
+use std::usize;
+
 use boring_derive_macro::From;
 
 // #[derive(Debug, From)]
