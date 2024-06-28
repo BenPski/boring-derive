@@ -8,7 +8,11 @@ struct Example {
 }
 
 #[derive(Debug, From, Builder)]
-struct Thing {}
+struct Thing {
+    first: String,
+    #[builder_skip]
+    second: String,
+}
 
 // #[derive(Debug, From)]
 // struct Example2 {

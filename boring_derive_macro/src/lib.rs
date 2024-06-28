@@ -15,7 +15,7 @@ pub fn from_derive(input: TokenStream) -> TokenStream {
     impl_from(&ast)
 }
 
-#[proc_macro_derive(Builder)]
+#[proc_macro_derive(Builder, attributes(builder_skip))]
 pub fn builder_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
