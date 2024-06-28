@@ -15,9 +15,11 @@ pub fn from_derive(input: TokenStream) -> TokenStream {
     impl_from(&ast)
 }
 
-#[proc_macro_derive(Builder, attributes(builder_skip))]
+#[proc_macro_derive(Builder, attributes(builder))]
 pub fn builder_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     impl_builder(&ast)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }

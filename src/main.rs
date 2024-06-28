@@ -10,7 +10,7 @@ struct Example {
 #[derive(Debug, From, Builder)]
 struct Thing {
     first: String,
-    #[builder_skip]
+    #[builder(skip)]
     second: String,
 }
 
@@ -28,7 +28,7 @@ struct Thing {
 #[derive(Debug, From)]
 struct A;
 
-#[derive(Debug, From, Builder)]
+#[derive(Debug, From)]
 struct B(usize);
 
 #[derive(Debug, From)]
