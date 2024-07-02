@@ -2,6 +2,15 @@
 name = "boring-derive"
 version = "0.1.0"
 edition = "2021"
+description = "Derive macros for some common patterns"
+authors = ["Ben Pawlowski ben@pepski.com"]
+license = "MIT"
+repository = "https://github.com/BenPski/boring-derive"
+readme = "README.md"
+exclude = [".github", "scripts"]
+rust-version = "1.70.0"
+keywords = ["macros"]
+categories = ["development-tools", "rust-patterns"]
 
 [lib]
 proc-macro = true
