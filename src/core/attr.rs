@@ -32,16 +32,19 @@ impl<'c, T> Attr<'c, T> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_opt<A: ToTokens>(&mut self, obj: A, value: Option<T>) {
         if let Some(value) = value {
             self.set(obj, value);
         }
     }
 
+    #[allow(dead_code)]
     pub fn get(self) -> Option<T> {
         self.value
     }
 
+    #[allow(dead_code)]
     pub fn get_with_tokens(self) -> Option<(TokenStream, T)> {
         self.value.map(|v| (self.tokens, v))
     }

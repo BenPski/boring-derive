@@ -1,149 +1,152 @@
-// use proc_macro::TokenStream;
-// use quote::{quote, quote_spanned};
-// use syn::{spanned::Spanned, Data, Field, Fields};
-//
-// /// Derive macros implementations for traits that often have very simple implementations
-// ///
-// /// For example a `From` trait can be implemented very trivially for most data types
-// ///
-// /// Can be useful for enums that just wrap other types
-// /// enum Example {
-// ///     First(A),
-// ///     Second(B),
-// /// }
-// ///
-// /// impl From<A> for Example {
-// ///     fn from(value: A) -> Self {
-// ///         Self::First(value)
-// ///     }
-// /// }
-// ///
-// /// impl From<B> for Example {
-// ///     fn from(value: B) -> Self {
-// ///         Self::Second(value)
-// ///     }
-// /// }
-// ///
-//
-// enum Example {
-//     Empty,
-//     First(String),
-//     Second(usize),
-//     Multiple(String, usize),
-//     Struct { a: String, b: String },
-// }
-//
-// impl From<()> for Example {
-//     fn from(_: ()) -> Self {
-//         Self::Empty
-//     }
-// }
-//
-// impl From<String> for Example {
-//     fn from(value: String) -> Self {
-//         Self::First(value)
-//     }
-// }
-//
-// impl From<usize> for Example {
-//     fn from(value: usize) -> Self {
-//         Self::Second(value)
-//     }
-// }
-//
-// impl From<(String, usize)> for Example {
-//     fn from(value: (String, usize)) -> Self {
-//         Self::Multiple(value.0, value.1)
-//     }
-// }
-//
-// impl From<(String, String)> for Example {
-//     fn from(value: (String, String)) -> Self {
-//         Self::Struct {
-//             a: value.0,
-//             b: value.1,
-//         }
-//     }
-// }
-//
-// // would need to know the error type ahead of time
-// impl TryFrom<Example> for () {
-//     type Error = ();
-//     fn try_from(value: Example) -> Result<Self, Self::Error> {
-//         if let Example::Empty = value {
-//             Ok(())
-//         } else {
-//             Err(())
-//         }
-//     }
-// }
-//
-// fn test() {
-//     let x = (String::from("weiner"), String::from("balls"));
-//     let example: Example = x.into();
-//     let ex: Example = example.into();
-//     // let y: (String, String) = example.into();
-// }
-//
-// impl Example {
-//     fn new() -> Self {
-//         Example::Empty
-//     }
-// }
-//
-// impl Example {
-//     fn another(&self) -> String {
-//         String::new()
-//     }
-// }
-//
-// fn something() -> String {
-//     let x = Example::new();
-//     x.another()
-// }
-//
-// // can also do simple builder implementations
-//
-// #[derive(Debug, Default)]
-// struct Build {
-//     a: String,
-//     b: usize,
-// }
-//
-// impl Build
-// where
-//     Self: Default,
-// {
-//     // the default and the new aren't necessarily needed
-//     fn new() -> Self {
-//         Self::default()
-//     }
-//
-//     fn a(mut self, value: impl Into<String>) -> Self {
-//         self.a = value.into();
-//         self
-//     }
-//
-//     fn b(mut self, value: impl Into<usize>) -> Self {
-//         self.b = value.into();
-//         self
-//     }
-// }
-//
-// impl Build {
-//     fn formated(&self) -> String {
-//         format!("{}, {}", self.a, self.b)
-//     }
-// }
-//
-// // something more complex is possibly is adding in generic contraints, not sure how well that works
-//
-// enum Thing<T> {
-//     Item(T),
-// }
-//
-// impl<T> From<T> for Thing<T> {
-//     fn from(value: T) -> Self {
-//         Self::Item(value)
-//     }
-// }
+//! Derive macros for some common patterns
+//!
+//! The currently implemented patterns are:
+//!  - Builder
+//!  - From
+//!
+//! # Builder
+//! for the `Builder` macro it generates an impl with methods of the form:
+//! ```text
+//! fn field(mut self, value: impl Into<Type>) -> Self {
+//!     self.field = value.into()
+//!     self
+//! }
+//! ```
+//!
+//! An example of the generated code for a struct is:
+//! ```text
+//! #[derive(Default, Builder)]
+//! struct Example {
+//!     item: String,
+//!     value: usize,
+//! }
+//!
+//! // generated impl
+//! impl Example {
+//!     fn item(mut self, value: impl Into<String>) -> Self {
+//!         self.item = value.into();
+//!         self
+//!     }
+//!
+//!     fn value(mut self, value: impl Into<usize>) -> Self {
+//!         self.value = value.into();
+//!         self
+//!     }
+//! }
+//!
+//! // using the values
+//! fn func() {
+//!     let ex = Example::default()
+//!         .item("something")
+//!         .value(1);
+//!     ...
+//! }
+//! ```
+//!
+//! if you want to not include a field in the builder pattern use the `skip` attribute:
+//! ```text
+//! #[derive(Builder)]
+//! struct Example {
+//!     #[builder(skip)]
+//!     item: String,
+//!     value: usize,
+//! }
+//! ```
+//!
+//! if you do not want to have the `Into` use the `no_into` attribute:
+//! ```text
+//! #[derive(Builder)]
+//! struct Example {
+//!     #[builder(no_into)]
+//!     item: String,
+//!     value: usize,
+//! }
+//! ```
+//!
+//! The Builder pattern is not defined for enums, unit-like struct, newtypes, and tuple structs
+//!
+//! # From
+//! For the `From` derive it implements the trivial `From<Type>` implementations:
+//! ```text
+//! #[derive(From)]
+//! enum Example {
+//!     Empty,
+//!     Number(f32),
+//!     Pair(String, String),
+//! }
+//!
+//! // will generate
+//! impl From<()> for Example {
+//!     fn from(value: ()) -> Self {
+//!         Example::Empty
+//!     }
+//! }
+//! impl From<f32> for Example {
+//!     fn from(value: f32) -> Self {
+//!         Example::Number(f32)
+//!     }
+//! }
+//! impl From<(String, String)> for Example {
+//!     fn from(value: (String, String)) -> Self {
+//!         Example::Pair(value.0, value.1)
+//!     }
+//! }
+//! ```
+//!
+//! For struct datatypes it uses tuples as the type to convert from:
+//! ```text
+//! #[derive(From)]
+//! struct Example {
+//!     item: usize
+//!     value: String
+//! }
+//!
+//! // generates
+//! impl From<(usize, String)> for Example {
+//!     fn from(value: (usize, String)) -> Self {
+//!         Example {
+//!             item: value.0,
+//!             value: value.1,
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! If you need to not generate a `From` implementation use the `skip` attribute
+//! ```text
+//! #[derive(From)]
+//! enum Example {
+//!     #[from(skip)]
+//!     Empty,
+//!     Number(f32),
+//!     Pair(String, String),
+//! }
+//! ```
+mod builder_derive;
+mod core;
+mod from_derive;
+
+use proc_macro::TokenStream;
+use syn::parse_macro_input;
+use syn::DeriveInput;
+
+use builder_derive::impl_builder;
+use from_derive::impl_from;
+
+#[proc_macro_derive(From, attributes(from))]
+pub fn from_derive(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    impl_from(&ast)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[proc_macro_derive(Builder, attributes(builder))]
+pub fn builder_derive(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    impl_builder(&ast)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}

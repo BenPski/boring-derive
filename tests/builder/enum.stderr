@@ -1,0 +1,5 @@
+error: deriving builder pattern not supported for enums
+ --> tests/builder/enum.rs:4:6
+  |
+4 | enum Example {
+  |      ^^^^^^^

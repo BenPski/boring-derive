@@ -1,0 +1,18 @@
+error[E0599]: no method named `field1` found for struct `Example` in the current scope
+  --> tests/builder/skip.rs:11:38
+   |
+4  | struct Example {
+   | -------------- method `field1` not found for this struct
+...
+11 |     let example = Example::default().field1(0.0).field2("something");
+   |                                      ^^^^^^ field, not a method
+   |
+help: remove the arguments
+   |
+11 -     let example = Example::default().field1(0.0).field2("something");
+11 +     let example = Example::default().field1.field2("something");
+   |
+help: there is a method `field2` with a similar name
+   |
+11 |     let example = Example::default().field2(0.0).field2("something");
+   |                                      ~~~~~~

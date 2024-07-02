@@ -1,0 +1,5 @@
+error: unknown builder field attribute: `not_real`
+ --> tests/builder/bad_attr.rs:5:15
+  |
+5 |     #[builder(not_real)]
+  |               ^^^^^^^^

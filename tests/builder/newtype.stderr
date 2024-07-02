@@ -1,0 +1,5 @@
+error: deriving builder pattern not supported for newtype style structs
+ --> tests/builder/newtype.rs:4:8
+  |
+4 | struct Example(usize);
+  |        ^^^^^^^

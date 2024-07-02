@@ -35,10 +35,7 @@ where
                 Data::Struct(style, fields)
             }
             syn::Data::Enum(data) => Data::Enum(enum_from_ast(cx, &data.variants)),
-            syn::Data::Union(_data) => {
-                cx.error_spanned_by(item, "Deriving for unions is not supported.");
-                return None;
-            }
+            syn::Data::Union(data) => Data::Union(union_from_ast(cx, &data.fields)),
         };
 
         let item = Container {
@@ -89,6 +86,13 @@ where
         syn::Fields::Unnamed(fields) => (Style::Tuple, fields_from_ast(cx, &fields.unnamed)),
         syn::Fields::Named(fields) => (Style::Struct, fields_from_ast(cx, &fields.named)),
     }
+}
+
+fn union_from_ast<'a, A>(cx: &Context, fields: &'a syn::FieldsNamed) -> Vec<Field<'a, A>>
+where
+    A: AttrField,
+{
+    fields_from_ast(cx, &fields.named)
 }
 
 fn fields_from_ast<'a, A>(
