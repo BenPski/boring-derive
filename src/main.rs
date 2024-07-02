@@ -9,6 +9,7 @@ struct Example {
 
 #[derive(Debug, From, Builder)]
 struct Thing {
+    #[builder(no_into)]
     first: String,
     #[builder(skip)]
     second: String,
@@ -37,6 +38,7 @@ struct C(String, usize);
 #[derive(Debug, From)]
 enum Balls {
     Left(String),
+    #[from(skip)]
     Right(usize),
 }
 

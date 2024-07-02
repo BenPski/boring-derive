@@ -1,148 +1,175 @@
-use proc_macro::TokenStream;
+use std::clone;
+
+use proc_macro2::TokenStream;
 use proc_macro2::{self};
-use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, Data, Fields, FieldsNamed, FieldsUnnamed, Ident};
+use quote::{quote, quote_spanned, ToTokens};
+use syn::{
+    meta::ParseNestedMeta, punctuated::Punctuated, spanned::Spanned, Attribute, Error, Fields,
+    FieldsNamed, FieldsUnnamed, Ident, Meta, Token,
+};
 
-// struct Thing<T> {
-//  item: T
-// }
-//
-// impl<T> From<T> for Thing<T> {
-//  fn from(value: T) -> Self {
-//      Self { item: value }
-//  }
-// }
-//
-// struct Thing {
-//  first: A,
-//  second: B,
-// }
-//
-// impl From<(A, B)> for Thing {
-//  fn from(value: (A, B)) -> Self {
-//      Self { first: value.0, second: value.1 }
-//  }
-// }
-//
-// struct Thing(T);
-//
-// impl<T> From<T> for Thing {
-//  fn from(value: T) -> Self {
-//      Self(value)
-//  }
-// }
-//
-// struct Thing;
-//
-// impl From<()> for Thing {
-//  fn from(value: ()) -> Self {
-//      Self
-//  }
-// }
-//
+use crate::core::container::AttrField;
+use crate::core::container::AttrVariant;
+use crate::core::container::Container;
+use crate::core::data::Data;
+use crate::core::data::Field;
+use crate::core::data::Style;
+use crate::core::{
+    attr::{Attr, BoolAttr},
+    context::Context,
+    symbol::Symbol,
+};
 
-pub(crate) fn impl_from(ast: &syn::DeriveInput) -> TokenStream {
-    let name = &ast.ident;
-    let (impl_generics, type_generics, where_clause) = ast.generics.split_for_impl();
+const FROM: Symbol = Symbol("from");
+const SKIP: Symbol = Symbol("skip");
 
-    let expanded = match ast.data {
-        Data::Struct(ref data) => {
-            let (from_type, from_body) = handle_fields(name, &data.fields);
+struct FromVariant {
+    skip: bool,
+}
 
+impl AttrVariant for FromVariant {
+    fn from_ast(cx: &Context, variant: &syn::Variant) -> Self {
+        let mut skip = BoolAttr::none(cx, SKIP);
+
+        for attr in &variant.attrs {
+            if attr.path() != FROM {
+                continue;
+            }
+
+            if let Err(err) = attr.parse_nested_meta(|meta| {
+                if meta.path == SKIP {
+                    skip.set_true(&meta.path);
+                } else {
+                    let path = meta.path.to_token_stream().to_string().replace(' ', "");
+                    return Err(
+                        meta.error(format_args!("unknown from variant attribute: `{}`", path))
+                    );
+                }
+                Ok(())
+            }) {
+                cx.syn_error(err);
+            }
+        }
+
+        FromVariant { skip: skip.get() }
+    }
+}
+
+struct FromField;
+
+impl AttrField for FromField {
+    fn from_ast(cx: &Context, index: usize, field: &syn::Field) -> Self {
+        FromField
+    }
+}
+
+pub(crate) fn impl_from(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
+    let ctxt = Context::new();
+    let cont: Option<Container<FromField, FromVariant>> = Container::from_ast(&ctxt, ast);
+    let cont = match cont {
+        Some(cont) => cont,
+        None => return Err(ctxt.check().unwrap_err()),
+    };
+
+    ctxt.check()?;
+    let ident = &cont.ident;
+    let (impl_generics, type_generics, where_clause) = cont.generics.split_for_impl();
+
+    let expanded = match cont.data {
+        Data::Struct(style, fields) => {
+            let (from_type, from_body) = gen_info(ident, &style, &fields);
             quote! {
-                impl #impl_generics From<#from_type> for #name #type_generics #where_clause {
+                impl #impl_generics From<#from_type> for #ident #type_generics #where_clause {
                     fn from(value: #from_type) -> Self {
                         #from_body
                     }
                 }
             }
         }
-        Data::Enum(ref data) => {
-            let variants = data.variants.iter().map(|v| {
+
+        Data::Enum(variants) => {
+            let variants = variants.iter().filter_map(|v| {
+                if v.attrs.skip {
+                    None
+                } else {
                 let v_name = &v.ident;
-                let (from_type, from_body) = handle_fields(v_name, &v.fields);
-                quote! {
-                    impl #impl_generics From<#from_type> for #name #type_generics #where_clause {
+                let (from_type, from_body) = gen_info(v_name, &v.style, &v.fields);
+                Some(quote! {
+                    impl #impl_generics From<#from_type> for #ident #type_generics #where_clause {
                         fn from(value: #from_type) -> Self {
-                            Self::#from_body
+                            #ident::#from_body
                         }
                     }
+                })
                 }
             });
+
             quote! { #(#variants)* }
         }
-        Data::Union(ref _data) => {
-            unimplemented!()
+        Data::Union(_) => {
+            return Err(Error::new(
+                cont.ident.span(),
+                format_args!("deriving from not supported for unions"),
+            ));
         }
     };
 
     // panic!("{:?}", expanded.to_string());
-    expanded.into()
+    Ok(expanded.into())
 }
 
-fn handle_fields(
+fn gen_info<'a, F: AttrField>(
     constructor: &Ident,
-    fields: &Fields,
+    style: &Style,
+    fields: &Vec<Field<'a, F>>,
 ) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
-    let (from_type, from_body) = match fields {
-        Fields::Unit => (quote! { () }, quote! { #constructor }),
-        Fields::Named(ref fields) => from_fields_named(constructor, fields),
-        Fields::Unnamed(ref fields) => from_fields_unnamed(constructor, fields),
-    };
-    (from_type, from_body)
-}
+    match style {
+        Style::Unit => (quote! {()}, quote! {#constructor}),
+        Style::Newtype => {
+            let field = &fields[0];
+            let ty = field.ty;
+            (quote! {#ty}, quote! {#constructor(value)})
+        }
+        Style::Tuple => {
+            if fields.len() == 1 {
+                let field = &fields[0];
+                let ty = field.ty;
+                (quote! {#ty}, quote! {#constructor(value)})
+            } else {
+                let recurse = fields.iter().map(|f| {
+                    let ty = &f.ty;
+                    quote_spanned! {f.original.span() => #ty}
+                });
+                let from_type = quote! { ( #(#recurse),* )};
+                let recurse = fields.iter().enumerate().map(|(i, f)| {
+                    let index = syn::Index::from(i);
+                    quote_spanned! {f.original.span() => value.#index}
+                });
+                let from_body = quote! { #constructor(#(#recurse),*) };
+                (from_type, from_body)
+            }
+        }
+        Style::Struct => {
+            if fields.len() == 1 {
+                let field = &fields[0];
+                let name = &field.original.ident;
+                let ty = field.ty;
+                (quote! {#ty}, quote! {#constructor { #name: value }})
+            } else {
+                let recurse = fields.iter().map(|f| {
+                    let ty = &f.ty;
+                    quote_spanned! {f.original.span() => #ty}
+                });
+                let from_type = quote! { ( #(#recurse),* )};
+                let recurse = fields.iter().enumerate().map(|(i, f)| {
+                    let index = syn::Index::from(i);
+                    let name = &f.original.ident;
+                    quote_spanned! {f.original.span() => #name: value.#index}
+                });
+                let from_body = quote! { #constructor { #(#recurse),* } };
 
-fn from_fields_named(
-    constructor: &Ident,
-    fields: &FieldsNamed,
-) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
-    if fields.named.len() == 1 {
-        let field = fields.named.iter().next().unwrap();
-        let ty = &field.ty;
-        let field_name = &field.ident;
-        (
-            quote! { #ty },
-            quote! { #constructor { #field_name: value} },
-        )
-    } else if fields.named.is_empty() {
-        (quote! { () }, quote! { #constructor { }})
-    } else {
-        let recurse = fields.named.iter().map(|f| {
-            let ty = &f.ty;
-            quote_spanned! {f.span() => #ty}
-        });
-        let tuple = quote! { ( #(#recurse),* )};
-        let recurse = fields.named.iter().enumerate().map(|(i, f)| {
-            let ident = &f.ident;
-            let index = syn::Index::from(i);
-            quote_spanned! {f.span() => #ident: value.#index }
-        });
-        let body = quote! { #constructor { #(#recurse),* } };
-        (tuple, body)
-    }
-}
-
-fn from_fields_unnamed(
-    constructor: &Ident,
-    fields: &FieldsUnnamed,
-) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
-    if fields.unnamed.len() == 1 {
-        let field = fields.unnamed.iter().next().unwrap();
-        let ty = &field.ty;
-        (quote! { #ty }, quote! { #constructor(value) })
-    } else if fields.unnamed.is_empty() {
-        (quote! { () }, quote! { #constructor })
-    } else {
-        let recurse = fields.unnamed.iter().map(|f| {
-            let ty = &f.ty;
-            quote_spanned! {f.span() => #ty}
-        });
-        let tuple = quote! { ( #(#recurse),* )};
-        let recurse = fields.unnamed.iter().enumerate().map(|(i, f)| {
-            let index = syn::Index::from(i);
-            quote_spanned! {f.span() => value.#index }
-        });
-        let body = quote! { #constructor(#(#recurse),*) };
-        (tuple, body)
+                (from_type, from_body)
+            }
+        }
     }
 }
