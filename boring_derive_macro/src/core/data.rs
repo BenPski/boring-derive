@@ -1,6 +1,3 @@
-use syn::{punctuated::Punctuated, Token};
-
-use super::{attr, container::Container, context::Context};
 use crate::core::container::{AttrField, AttrVariant};
 
 pub enum Data<'a, F, V>

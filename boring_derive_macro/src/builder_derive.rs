@@ -1,16 +1,12 @@
-use core::panic;
-use std::{cell::RefCell, fmt::Display, thread};
-
 use proc_macro2::TokenStream;
-use quote::{quote, quote_spanned, ToTokens};
-use syn::{punctuated::Punctuated, spanned::Spanned, Error, Field, Ident, Path, Token};
+use quote::{quote, ToTokens};
+use syn::Error;
 
 use crate::core::{
-    attr::{Attr, BoolAttr},
+    attr::BoolAttr,
     container::{AttrField, AttrVariant, Container},
     context::Context,
-    data::Data,
-    data::Style,
+    data::{Data, Style},
     symbol::Symbol,
 };
 
@@ -26,13 +22,13 @@ struct BuilderField {
 }
 
 impl AttrVariant for BuilderVariant {
-    fn from_ast(cx: &Context, variant: &syn::Variant) -> Self {
+    fn from_ast(_cx: &Context, _variant: &syn::Variant) -> Self {
         BuilderVariant
     }
 }
 
 impl AttrField for BuilderField {
-    fn from_ast(cx: &Context, index: usize, field: &syn::Field) -> Self {
+    fn from_ast(cx: &Context, _index: usize, field: &syn::Field) -> Self {
         let mut skip = BoolAttr::none(cx, SKIP);
         let mut no_into = BoolAttr::none(cx, NO_INTO);
 

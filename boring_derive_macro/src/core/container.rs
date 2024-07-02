@@ -1,10 +1,7 @@
-use proc_macro2::TokenStream;
-use syn::{punctuated::Punctuated, Ident, Token};
+use syn::{punctuated::Punctuated, Token};
 
 use super::{context::Context, data::Data};
-use crate::core::data::Field;
-use crate::core::data::Style;
-use crate::core::data::Variant;
+use crate::core::data::{Field, Style, Variant};
 
 pub trait AttrVariant {
     fn from_ast(cx: &Context, variant: &syn::Variant) -> Self;
@@ -32,13 +29,13 @@ where
     V: AttrVariant,
 {
     pub fn from_ast(cx: &Context, item: &'a syn::DeriveInput) -> Option<Container<'a, F, V>> {
-        let mut data = match &item.data {
+        let data = match &item.data {
             syn::Data::Struct(data) => {
                 let (style, fields) = struct_from_ast(cx, &data.fields);
                 Data::Struct(style, fields)
             }
             syn::Data::Enum(data) => Data::Enum(enum_from_ast(cx, &data.variants)),
-            syn::Data::Union(data) => {
+            syn::Data::Union(_data) => {
                 cx.error_spanned_by(item, "Deriving for unions is not supported.");
                 return None;
             }

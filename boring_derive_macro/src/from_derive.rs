@@ -1,22 +1,13 @@
-use std::clone;
-
+use proc_macro2;
 use proc_macro2::TokenStream;
-use proc_macro2::{self};
 use quote::{quote, quote_spanned, ToTokens};
-use syn::{
-    meta::ParseNestedMeta, punctuated::Punctuated, spanned::Spanned, Attribute, Error, Fields,
-    FieldsNamed, FieldsUnnamed, Ident, Meta, Token,
-};
+use syn::{spanned::Spanned, Error, Ident};
 
-use crate::core::container::AttrField;
-use crate::core::container::AttrVariant;
-use crate::core::container::Container;
-use crate::core::data::Data;
-use crate::core::data::Field;
-use crate::core::data::Style;
 use crate::core::{
-    attr::{Attr, BoolAttr},
+    attr::BoolAttr,
+    container::{AttrField, AttrVariant, Container},
     context::Context,
+    data::{Data, Field, Style},
     symbol::Symbol,
 };
 
@@ -58,7 +49,7 @@ impl AttrVariant for FromVariant {
 struct FromField;
 
 impl AttrField for FromField {
-    fn from_ast(cx: &Context, index: usize, field: &syn::Field) -> Self {
+    fn from_ast(_cx: &Context, _index: usize, _field: &syn::Field) -> Self {
         FromField
     }
 }
