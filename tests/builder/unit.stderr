@@ -1,0 +1,5 @@
+error: deriving builder pattern not supported for unit-like structs
+ --> tests/builder/unit.rs:4:8
+  |
+4 | struct Example;
+  |        ^^^^^^^

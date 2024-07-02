@@ -1,0 +1,5 @@
+error: unknown from variant attribute: `not_real`
+ --> tests/from/bad_attr.rs:6:12
+  |
+6 |     #[from(not_real)]
+  |            ^^^^^^^^

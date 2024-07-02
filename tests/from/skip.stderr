@@ -1,0 +1,10 @@
+error[E0277]: the trait bound `Example: From<{float}>` is not satisfied
+  --> tests/from/skip.rs:15:27
+   |
+15 |     let ex: Example = 1.3.into();
+   |                           ^^^^ the trait `From<{float}>` is not implemented for `Example`, which is required by `{float}: Into<_>`
+   |
+   = help: the following other types implement trait `From<T>`:
+             <Example as From<String>>
+             <Example as From<()>>
+   = note: required for `{float}` to implement `Into<Example>`

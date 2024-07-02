@@ -1,0 +1,5 @@
+error: deriving builder pattern not supported for tuple structs
+ --> tests/builder/tuple.rs:4:8
+  |
+4 | struct Example(usize, String);
+  |        ^^^^^^^

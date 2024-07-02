@@ -2,6 +2,7 @@ use boring_derive::Builder;
 
 #[derive(Debug, Default, Builder)]
 struct Example {
+    #[builder(skip)]
     field1: f32,
     field2: String,
 }
