@@ -1,4 +1,3 @@
-use proc_macro2;
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned, ToTokens};
 use syn::{spanned::Spanned, Error, Ident};
@@ -106,13 +105,13 @@ pub(crate) fn impl_from(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     };
 
     // panic!("{:?}", expanded.to_string());
-    Ok(expanded.into())
+    Ok(expanded)
 }
 
-fn gen_info<'a, F: AttrField>(
+fn gen_info<F: AttrField>(
     constructor: &Ident,
     style: &Style,
-    fields: &Vec<Field<'a, F>>,
+    fields: &[Field<'_, F>],
 ) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
     match style {
         Style::Unit => (quote! {()}, quote! {#constructor}),

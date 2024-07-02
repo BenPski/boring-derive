@@ -6,7 +6,7 @@
 //!
 //! # Builder
 //! for the `Builder` macro it generates an impl with methods of the form:
-//! ```
+//! ```text
 //! fn field(mut self, value: impl Into<Type>) -> Self {
 //!     self.field = value.into()
 //!     self
@@ -14,7 +14,7 @@
 //! ```
 //!
 //! An example of the generated code for a struct is:
-//! ```
+//! ```text
 //! #[derive(Default, Builder)]
 //! struct Example {
 //!     item: String,
@@ -35,7 +35,7 @@
 //! }
 //!
 //! // using the values
-//! fn main() {
+//! fn func() {
 //!     let ex = Example::default()
 //!         .item("something")
 //!         .value(1);
@@ -44,7 +44,7 @@
 //! ```
 //!
 //! if you want to not include a field in the builder pattern use the `skip` attribute:
-//! ```
+//! ```text
 //! #[derive(Builder)]
 //! struct Example {
 //!     #[builder(skip)]
@@ -54,7 +54,7 @@
 //! ```
 //!
 //! if you do not want to have the `Into` use the `no_into` attribute:
-//! ```
+//! ```text
 //! #[derive(Builder)]
 //! struct Example {
 //!     #[builder(no_into)]
@@ -67,7 +67,7 @@
 //!
 //! # From
 //! For the `From` derive it implements the trivial `From<Type>` implementations:
-//! ```
+//! ```text
 //! #[derive(From)]
 //! enum Example {
 //!     Empty,
@@ -88,13 +88,13 @@
 //! }
 //! impl From<(String, String)> for Example {
 //!     fn from(value: (String, String)) -> Self {
-//!         Example::Pair(value)
+//!         Example::Pair(value.0, value.1)
 //!     }
 //! }
 //! ```
 //!
 //! For struct datatypes it uses tuples as the type to convert from:
-//! ```
+//! ```text
 //! #[derive(From)]
 //! struct Example {
 //!     item: usize
@@ -113,7 +113,7 @@
 //! ```
 //!
 //! If you need to not generate a `From` implementation use the `skip` attribute
-//! ```
+//! ```text
 //! #[derive(From)]
 //! enum Example {
 //!     #[from(skip)]

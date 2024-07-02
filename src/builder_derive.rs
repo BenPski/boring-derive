@@ -140,5 +140,5 @@ pub(crate) fn impl_builder(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
         }
     };
 
-    Ok(expanded.into())
+    Ok(expanded)
 }
