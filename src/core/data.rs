@@ -15,6 +15,7 @@ where
     F: AttrField,
     V: AttrVariant,
 {
+    #[allow(dead_code)]
     pub fn all_fields(&'a self) -> Box<dyn Iterator<Item = &'a Field<'a, F>> + 'a> {
         match self {
             Data::Struct(_, fields) => Box::new(fields.iter()),
