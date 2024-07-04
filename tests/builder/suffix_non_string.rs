@@ -1,7 +1,7 @@
 use boring_derive::Builder;
 
 #[derive(Debug, Default, Builder)]
-#[builder(prefix = 1)]
+#[builder(suffix = 1)]
 struct Example {
     item: String,
 }

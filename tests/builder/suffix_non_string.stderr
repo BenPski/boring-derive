@@ -1,0 +1,5 @@
+error: suffix must be a string, got `1`
+ --> tests/builder/suffix_non_string.rs:4:11
+  |
+4 | #[builder(suffix = 1)]
+  |           ^^^^^^^^^^
