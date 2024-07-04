@@ -3,6 +3,10 @@ use syn::{punctuated::Punctuated, Token};
 use super::{context::Context, data::Data};
 use crate::core::data::{Field, Style, Variant};
 
+pub trait AttrContainer {
+    fn from_ast(cx: &Context, item: &syn::DeriveInput) -> Self;
+}
+
 pub trait AttrVariant {
     fn from_ast(cx: &Context, variant: &syn::Variant) -> Self;
 }
@@ -12,23 +16,28 @@ pub trait AttrField {
 }
 
 // parsing the ast into the data structure and the attributes
-pub struct Container<'a, F, V>
+#[allow(dead_code)]
+pub struct Container<'a, F, V, C>
 where
     F: AttrField,
     V: AttrVariant,
+    C: AttrContainer,
 {
     pub ident: syn::Ident,
+    pub attrs: C,
     pub data: Data<'a, F, V>,
     pub generics: &'a syn::Generics,
     pub original: &'a syn::DeriveInput,
 }
 
-impl<'a, F, V> Container<'a, F, V>
+impl<'a, F, V, C> Container<'a, F, V, C>
 where
     F: AttrField,
     V: AttrVariant,
+    C: AttrContainer,
 {
-    pub fn from_ast(cx: &Context, item: &'a syn::DeriveInput) -> Option<Container<'a, F, V>> {
+    pub fn from_ast(cx: &Context, item: &'a syn::DeriveInput) -> Option<Container<'a, F, V, C>> {
+        let attrs = C::from_ast(cx, item);
         let data = match &item.data {
             syn::Data::Struct(data) => {
                 let (style, fields) = struct_from_ast(cx, &data.fields);
@@ -40,6 +49,7 @@ where
 
         let item = Container {
             ident: item.ident.clone(),
+            attrs,
             data,
             generics: &item.generics,
             original: item,

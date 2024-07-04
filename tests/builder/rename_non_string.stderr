@@ -1,0 +1,14 @@
+error: rename must be a string not `1`
+ --> tests/builder/rename_non_string.rs:5:15
+  |
+5 |     #[builder(rename = 1)]
+  |               ^^^^^^^^^^
+
+error[E0599]: no method named `value` found for struct `Example` in the current scope
+  --> tests/builder/rename_non_string.rs:10:33
+   |
+4  | struct Example {
+   | -------------- method `value` not found for this struct
+...
+10 |     let ex = Example::default().value("val");
+   |                                 ^^^^^ method not found in `Example`

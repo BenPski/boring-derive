@@ -63,6 +63,24 @@
 //! }
 //! ```
 //!
+//! if you need to alter the names of the associated methods use `prefix` and/or `rename`
+//! attributes.
+//! ```text
+//! #[derive(Builder)]
+//! #[builder(prefix = "set_")]
+//! struct Example {
+//!     item: String,
+//!     #[builder(rename = "num")]
+//!     value: usize,
+//! }
+//!
+//! // will generate
+//! impl Example {
+//!     fn set_item(mut self, ..) -> Self {..}
+//!     fn num(mut self, ..) -> Self {..}
+//! }
+//! ```
+//!
 //! The Builder pattern is not defined for enums, unit-like struct, newtypes, and tuple structs
 //!
 //! # From

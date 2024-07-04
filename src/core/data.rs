@@ -25,6 +25,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub struct Variant<'a, F, V>
 where
     F: AttrField,
@@ -37,6 +38,7 @@ where
     pub original: &'a syn::Variant,
 }
 
+#[allow(dead_code)]
 pub struct Field<'a, F>
 where
     F: AttrField,

@@ -4,7 +4,7 @@ use syn::{spanned::Spanned, Error, Ident};
 
 use crate::core::{
     attr::BoolAttr,
-    container::{AttrField, AttrVariant, Container},
+    container::{AttrContainer, AttrField, AttrVariant, Container},
     context::Context,
     data::{Data, Field, Style},
     symbol::Symbol,
@@ -12,6 +12,14 @@ use crate::core::{
 
 const FROM: Symbol = Symbol("from");
 const SKIP: Symbol = Symbol("skip");
+
+struct FromContainer;
+
+impl AttrContainer for FromContainer {
+    fn from_ast(_cx: &Context, _item: &syn::DeriveInput) -> Self {
+        FromContainer
+    }
+}
 
 struct FromVariant {
     skip: bool,
@@ -55,7 +63,8 @@ impl AttrField for FromField {
 
 pub(crate) fn impl_from(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let ctxt = Context::new();
-    let cont: Option<Container<FromField, FromVariant>> = Container::from_ast(&ctxt, ast);
+    let cont: Option<Container<FromField, FromVariant, FromContainer>> =
+        Container::from_ast(&ctxt, ast);
     let cont = match cont {
         Some(cont) => cont,
         None => return Err(ctxt.check().unwrap_err()),
