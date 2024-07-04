@@ -14,10 +14,12 @@ const BUILDER: Symbol = Symbol("builder");
 const SKIP: Symbol = Symbol("skip");
 const NO_INTO: Symbol = Symbol("no_into");
 const PREFIX: Symbol = Symbol("prefix");
+const SUFFIX: Symbol = Symbol("suffix");
 const RENAME: Symbol = Symbol("rename");
 
 struct BuilderContainer {
     prefix: Option<String>,
+    suffix: Option<String>,
 }
 
 struct BuilderVariant;
@@ -31,6 +33,7 @@ struct BuilderField {
 impl AttrContainer for BuilderContainer {
     fn from_ast(cx: &Context, item: &syn::DeriveInput) -> Self {
         let mut prefix = Attr::none(cx, PREFIX);
+        let mut suffix = Attr::none(cx, SUFFIX);
 
         for attr in &item.attrs {
             if attr.path() != BUILDER {
@@ -39,16 +42,30 @@ impl AttrContainer for BuilderContainer {
 
             if let Err(err) = attr.parse_nested_meta(|meta| {
                 if meta.path == PREFIX {
-                    let expr: syn::Expr = meta.value()?.parse()?;
-                    if let syn::Expr::Lit(syn::ExprLit {
+                    let expr: syn::ExprLit = meta.value()?.parse()?;
+                    if let syn::ExprLit {
                         lit: syn::Lit::Str(s),
                         ..
-                    }) = expr
+                    } = expr
                     {
                         prefix.set(&meta.path, s.value());
                     } else {
                         return Err(meta.error(format_args!(
-                            "prefix must be a string not `{}`",
+                            "prefix must be a string, got `{}`",
+                            expr.to_token_stream().to_string()
+                        )));
+                    }
+                } else if meta.path == SUFFIX {
+                    let expr: syn::ExprLit = meta.value()?.parse()?;
+                    if let syn::ExprLit {
+                        lit: syn::Lit::Str(s),
+                        ..
+                    } = expr
+                    {
+                        suffix.set(&meta.path, s.value());
+                    } else {
+                        return Err(meta.error(format_args!(
+                            "suffix must be a string, got `{}`",
                             expr.to_token_stream().to_string()
                         )));
                     }
@@ -67,6 +84,7 @@ impl AttrContainer for BuilderContainer {
 
         BuilderContainer {
             prefix: prefix.get(),
+            suffix: suffix.get(),
         }
     }
 }
@@ -139,6 +157,7 @@ pub(crate) fn impl_builder(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     ctxt.check()?;
 
     let prefix = &cont.attrs.prefix.unwrap_or(String::new());
+    let suffix = &cont.attrs.suffix.unwrap_or(String::new());
     let ident = &cont.ident;
     let vis = &ast.vis;
 
@@ -153,7 +172,12 @@ pub(crate) fn impl_builder(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
                     let method_name = if let Some(rename) = &f.attrs.rename {
                         format_ident!("{}", rename)
                     } else {
-                        format_ident!("{}{}", prefix, &f.original.ident.as_ref().unwrap())
+                        format_ident!(
+                            "{}{}{}",
+                            prefix,
+                            &f.original.ident.as_ref().unwrap(),
+                            suffix
+                        )
                     };
                     let field_name = &f.original.ident;
                     let field_ty = f.ty;
