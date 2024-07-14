@@ -22,3 +22,8 @@ syn = "2.0.67"
 
 [dev-dependencies]
 trybuild = "1.0.96"
+
+[features]
+default = ["from", "builder"]
+from = []
+builder = []
