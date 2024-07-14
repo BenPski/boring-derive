@@ -52,7 +52,7 @@ impl AttrContainer for BuilderContainer {
                     } else {
                         return Err(meta.error(format_args!(
                             "prefix must be a string, got `{}`",
-                            expr.to_token_stream().to_string()
+                            expr.to_token_stream()
                         )));
                     }
                 } else if meta.path == SUFFIX {
@@ -66,7 +66,7 @@ impl AttrContainer for BuilderContainer {
                     } else {
                         return Err(meta.error(format_args!(
                             "suffix must be a string, got `{}`",
-                            expr.to_token_stream().to_string()
+                            expr.to_token_stream()
                         )));
                     }
                 } else {
@@ -122,7 +122,7 @@ impl AttrField for BuilderField {
                     } else {
                         return Err(meta.error(format_args!(
                             "rename must be a string not `{}`",
-                            expr.to_token_stream().to_string()
+                            expr.to_token_stream()
                         )));
                     }
                 } else {

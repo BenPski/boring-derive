@@ -140,6 +140,10 @@
 //!     Pair(String, String),
 //! }
 //! ```
+//!
+//! # Features
+//! Default includes all available patterns, otherwise be more specific by using the `from` or
+//! `builder` feature to be more targetted.
 mod builder_derive;
 mod core;
 mod from_derive;
@@ -151,6 +155,7 @@ use syn::DeriveInput;
 use builder_derive::impl_builder;
 use from_derive::impl_from;
 
+#[cfg(feature = "from")]
 #[proc_macro_derive(From, attributes(from))]
 pub fn from_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
@@ -160,6 +165,7 @@ pub fn from_derive(input: TokenStream) -> TokenStream {
         .into()
 }
 
+#[cfg(feature = "builder")]
 #[proc_macro_derive(Builder, attributes(builder))]
 pub fn builder_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
